@@ -1,0 +1,4 @@
+build/cmake_install.cmake
+build/.cmake/api/v1/query/client-vscode/query.json
+build/.cmake/api/v1/reply/
+build/
