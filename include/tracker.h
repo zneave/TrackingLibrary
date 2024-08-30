@@ -1,5 +1,3 @@
-// tracker.h
-
 #ifndef TRACKER_H
 #define TRACKER_H
 
@@ -8,6 +6,8 @@
 #include <functional>
 #include "detection.h"
 #include "tracked_object.h"
+#include "FilterFactory.h"  // Include this if FilterFactory is defined in this header file
+#include "CoordinatesTransformation.h"  // Include this if CoordinatesTransformation is not defined in detection.h or tracked_object.h
 
 class Tracker {
 public:
@@ -27,6 +27,9 @@ public:
 
     int current_object_count() const;
     int total_object_count() const;
+
+    // Added the missing function declaration
+    std::vector<std::shared_ptr<TrackedObject>> get_active_objects() const;
 
 private:
     std::vector<std::shared_ptr<TrackedObject>> tracked_objects;

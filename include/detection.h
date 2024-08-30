@@ -1,5 +1,3 @@
-// detection.h
-
 #ifndef DETECTION_H
 #define DETECTION_H
 
@@ -7,7 +5,7 @@
 #include <memory>
 #include <Eigen/Dense>
 
-class CoordinatesTransformation;  // Forward declaration
+class CoordinatesTransformation;
 
 class Detection {
 public:

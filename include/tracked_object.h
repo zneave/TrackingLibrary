@@ -1,5 +1,3 @@
-// tracked_object.h
-
 #ifndef TRACKED_OBJECT_H
 #define TRACKED_OBJECT_H
 
@@ -7,7 +5,7 @@
 #include <memory>
 #include <Eigen/Dense>
 #include "detection.h"
-#include "filter.h"
+#include "filter.h"  // Ensure this includes the definition of Filter
 
 class _TrackedObjectFactory;  // Forward declaration
 class CoordinatesTransformation;  // Forward declaration
@@ -52,7 +50,7 @@ private:
     bool is_initializing;
     Eigen::MatrixXd absolute_points;
     std::vector<int> point_hit_counter;
-    std::shared_ptr<Filter> filter;
+    std::shared_ptr<Filter> filter;  // Ensure Filter is correctly defined or included
     std::vector<Detection> past_detections;
     int past_detections_length;
     CoordinatesTransformation* coord_transformations;
