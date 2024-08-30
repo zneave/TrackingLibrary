@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "functional": "cpp",
-        "iostream": "cpp"
-    }
+        "iostream": "cpp",
+        "algorithm": "cpp",
+        "dense": "cpp",
+        "*.tcc": "cpp"
+    },
+    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe"
 }
