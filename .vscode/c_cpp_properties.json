@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/include",  // Include folder inside your workspace
+                "${workspaceFolder}/src",     // Source folder inside your workspace
+                "${workspaceFolder}/**",      // Ensures all subdirectories are included
+                "C:/msys64/mingw64/include",  // Standard MSYS2 include path
+                "C:/msys64/usr/include",      // Additional MSYS2 include path
+                "C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include",  // GCC standard library includes
+                "C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/c++",  // C++ standard library path
+                "C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/c++/x86_64-w64-mingw32"  // C++ platform-specific path
+            ],
+            "defines": [],
+            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",  // Path to the g++ compiler
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}
