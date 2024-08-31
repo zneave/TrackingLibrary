@@ -1,7 +1,7 @@
 // detection.cpp
 
 #include "include/detection.h"
-#include "coordinates_transformation.h"  // Include header for CoordinatesTransformation
+#include "coordinates_transformation.h"
 
 Detection::Detection(const Eigen::MatrixXd& points, 
                      const Eigen::VectorXd& scores, 

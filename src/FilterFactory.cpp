@@ -1,50 +1,50 @@
-#include "include/FilterFactory.h"
-#include "NoFilter.h"  // Include this if NoFilter is implemented in a separate file
-#include <Eigen/Dense>
+#include "KalmanFilter.h"
+#include <memory>
 
-FilterPyKalmanFilterFactory::FilterPyKalmanFilterFactory(double R, double Q, double P)
-    : R(R), Q(Q), P(P) {}
+// FilterPyKalmanFilterFactory class
+class FilterPyKalmanFilterFactory {
+public:
+    FilterPyKalmanFilterFactory(double R, double Q, double P)
+        : R(R), Q(Q), P(P) {}
 
-std::unique_ptr<Eigen::MatrixXd> FilterPyKalmanFilterFactory::create_filter(const Eigen::MatrixXd& initial_detection) {
-    int num_points = initial_detection.rows();
-    int dim_points = initial_detection.cols();
-    int dim_z = dim_points * num_points;
-    int dim_x = 2 * dim_z;
+    std::unique_ptr<KalmanFilter> create_filter(const Eigen::MatrixXd& initial_detection) {
+        int num_points = initial_detection.rows();
+        int dim_points = initial_detection.cols();
+        int dim_z = dim_points * num_points;
+        int dim_x = 2 * dim_z;
 
-    auto filter = std::make_unique<Eigen::MatrixXd>(dim_x, dim_z);
+        auto filter = std::make_unique<KalmanFilter>(dim_x, dim_z);
 
-    // Initialize matrices (example setup)
-    Eigen::MatrixXd F = Eigen::MatrixXd::Identity(dim_x, dim_x);
-    double dt = 1.0;
-    F.block(0, dim_z, dim_z, dim_z) = dt * Eigen::MatrixXd::Identity(dim_z, dim_z);
+        filter->F.block(0, dim_z, dim_z, dim_z) = Eigen::MatrixXd::Identity(dim_z, dim_z);
+        filter->H = Eigen::MatrixXd::Identity(dim_z, dim_x);
+        filter->R = Eigen::MatrixXd::Identity(dim_z, dim_z) * R;
+        filter->Q = Eigen::MatrixXd::Identity(dim_x, dim_x) * Q;
+        filter->Q.block(dim_z, dim_z, dim_z, dim_z) *= Q;
+        filter->P.block(dim_z, dim_z, dim_z, dim_z) *= P;
 
-    Eigen::MatrixXd H = Eigen::MatrixXd::Identity(dim_z, dim_x);
-    Eigen::MatrixXd R_mat = Eigen::MatrixXd::Identity(dim_z, dim_z) * R;
-    Eigen::MatrixXd Q_mat = Eigen::MatrixXd::Identity(dim_x, dim_x) * Q;
-    Q_mat.block(dim_z, dim_z, dim_z, dim_z) *= Q;
+        filter->x.head(dim_z) = Eigen::Map<const Eigen::VectorXd>(initial_detection.data(), initial_detection.size());
+        filter->x.tail(dim_z).setZero();
 
-    Eigen::VectorXd x(dim_x);
-    x.head(dim_z) = Eigen::Map<const Eigen::VectorXd>(initial_detection.data(), initial_detection.size());
-    x.tail(dim_z).setZero();
+        return filter;
+    }
 
-    Eigen::MatrixXd P_mat = Eigen::MatrixXd::Identity(dim_x, dim_x);
-    P_mat.block(dim_z, dim_z, dim_z, dim_z) *= P;
+private:
+    double R, Q, P;
+};
 
-    // Setup filter struct or object here (custom implementation needed)
-    // Assuming custom Kalman filter object or structure is used
+// NoFilterFactory class
+class NoFilterFactory {
+public:
+    std::unique_ptr<KalmanFilter> create_filter(const Eigen::MatrixXd& initial_detection) {
+        int num_points = initial_detection.rows();
+        int dim_points = initial_detection.cols();
+        int dim_z = dim_points * num_points;
+        int dim_x = 2 * dim_z;
 
-    // Return constructed filter
-    return filter;
-}
+        auto no_filter = std::make_unique<KalmanFilter>(dim_x, dim_z);
+        no_filter->x.head(dim_z) = Eigen::Map<const Eigen::VectorXd>(initial_detection.data(), initial_detection.size());
+        no_filter->x.tail(dim_z).setZero();
 
-std::unique_ptr<Eigen::MatrixXd> NoFilterFactory::create_filter(const Eigen::MatrixXd& initial_detection) {
-    int num_points = initial_detection.rows();
-    int dim_points = initial_detection.cols();
-    int dim_z = dim_points * num_points;
-    int dim_x = 2 * dim_z;
-
-    auto no_filter = std::make_unique<NoFilter>(dim_x, dim_z);
-    no_filter->x.head(dim_z) = Eigen::Map<const Eigen::VectorXd>(initial_detection.data(), initial_detection.size());
-
-    return nullptr; // Replace with actual filter object if needed
-}
+        return no_filter;
+    }
+};
