@@ -6,8 +6,8 @@
 #include <functional>
 #include "detection.h"
 #include "tracked_object.h"
-#include "FilterFactory.h"  // Include this if FilterFactory is defined in this header file
-#include "CoordinatesTransformation.h"  // Include this if CoordinatesTransformation is not defined in detection.h or tracked_object.h
+#include "FilterFactory.h"
+#include "CoordinatesTransformation.h"
 
 class Tracker {
 public:

@@ -2,8 +2,19 @@
 #define TRANSLATION_TRANSFORMATION_H
 
 #include "coordinates_transformation.h"
+#include <Eigen/Dense>
+#include <map>
+#include <tuple>
 
-// Concrete class for translation-based coordinate transformation
+struct RowVector2dComparator {
+    bool operator()(const Eigen::RowVector2d& lhs, const Eigen::RowVector2d& rhs) const {
+        if (lhs.x() == rhs.x()) {
+            return lhs.y() < rhs.y();
+        }
+        return lhs.x() < rhs.x();
+    }
+};
+
 class TranslationTransformation : public CoordinatesTransformation {
 public:
     TranslationTransformation(const Eigen::VectorXd& movement_vector) : movement_vector(movement_vector) {}
@@ -20,7 +31,6 @@ private:
     Eigen::VectorXd movement_vector;
 };
 
-// Concrete class for calculating translation transformation between points
 class TranslationTransformationGetter : public TransformationGetter {
 public:
     TranslationTransformationGetter(double bin_size = 0.2, double proportion_points_used_threshold = 0.9)
@@ -30,8 +40,7 @@ public:
         Eigen::MatrixXd flow = curr_pts - prev_pts;
         flow = (flow.array() / bin_size).round() * bin_size;
         
-        // Compute unique flows and their counts
-        std::map<Eigen::RowVector2d, int> flow_count;
+        std::map<Eigen::RowVector2d, int, RowVector2dComparator> flow_count;
         for (int i = 0; i < flow.rows(); ++i) {
             Eigen::RowVector2d f = flow.row(i);
             flow_count[f]++;
@@ -58,7 +67,7 @@ public:
 private:
     double bin_size;
     double proportion_points_used_threshold;
-    mutable Eigen::VectorXd data;  // mutable to allow modification in const function
+    mutable Eigen::VectorXd data;
 };
 
 #endif // TRANSLATION_TRANSFORMATION_H
