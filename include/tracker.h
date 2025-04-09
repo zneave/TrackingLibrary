@@ -7,7 +7,7 @@
 #include "detection.h"
 #include "tracked_object.h"
 #include "FilterFactory.h"
-#include "CoordinatesTransformation.h"
+#include "coordinates_transformation.h"
 
 class Tracker {
 public:
@@ -27,8 +27,6 @@ public:
 
     int current_object_count() const;
     int total_object_count() const;
-
-    // Added the missing function declaration
     std::vector<std::shared_ptr<TrackedObject>> get_active_objects() const;
 
 private:
@@ -47,7 +45,9 @@ private:
 
     void remove_stale_trackers();
     void update_tracker_with_detections(const std::vector<std::shared_ptr<Detection>>& detections, int period);
-    void create_new_tracked_objects(const std::vector<std::shared_ptr<Detection>>& unmatched_detections, int period);
+
+    // 👇 Updated signature:
+    void create_new_tracked_objects(const std::vector<std::shared_ptr<Detection>>& unmatched_detections, int period, CoordinatesTransformation* coord_transformations);
 };
 
 #endif // TRACKER_H

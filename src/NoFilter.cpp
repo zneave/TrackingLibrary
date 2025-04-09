@@ -1,4 +1,4 @@
-#include "include/NoFilter.h"
+#include "NoFilter.h"
 
 NoFilter::NoFilter(int dim_x, int dim_z) : dim_z(dim_z), x(Eigen::VectorXd::Zero(dim_x)) {}
 

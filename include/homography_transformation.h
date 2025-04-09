@@ -80,6 +80,10 @@ public:
         return std::make_tuple(update_prvs, new HomographyTransformation(homography_matrix));
     }
 
+    TransformationGetter* clone() const override {
+        return new HomographyTransformationGetter(*this);
+    }
+
 private:
     int method;
     double ransac_reproj_threshold;

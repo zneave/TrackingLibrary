@@ -9,7 +9,7 @@
 class MotionEstimator {
 public:
     MotionEstimator(int max_points = 200, int min_distance = 15, int block_size = 3,
-                    TransformationGetter* transformations_getter = new HomographyTransformationGetter(), 
+                    TransformationGetter* transformations_getter = nullptr,
                     bool draw_flow = false, cv::Scalar flow_color = cv::Scalar(0, 0, 255), double quality_level = 0.01);
 
     std::optional<CoordinatesTransformation*> update(const cv::Mat& frame, const cv::Mat& mask = cv::Mat());

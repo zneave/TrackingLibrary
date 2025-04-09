@@ -1,14 +1,12 @@
-// tracker.cpp
-
-#include "include/tracker.h"
-#include "include/FilterFactory.h"
+#include "tracker.h"
+#include "FilterFactory.h"
 #include <algorithm>
 #include <iostream>
 
 Tracker::Tracker(std::function<double(const Detection&, const TrackedObject&)> distance_function,
                  double distance_threshold, int hit_counter_max, int initialization_delay,
                  int pointwise_hit_counter_max, double detection_threshold,
-                 FilterFactory* filter_factory, int past_detections_length, 
+                 FilterFactory* filter_factory, int past_detections_length,
                  std::function<double(const TrackedObject&, const TrackedObject&)> reid_distance_function,
                  double reid_distance_threshold, int reid_hit_counter_max)
     : distance_function(distance_function), distance_threshold(distance_threshold),
@@ -28,6 +26,8 @@ std::vector<std::shared_ptr<TrackedObject>> Tracker::update(
     const std::vector<std::shared_ptr<Detection>>& detections,
     int period, CoordinatesTransformation* coord_transformations) {
 
+    std::cout << "[DEBUG] Running update() with " << detections.size() << " detections\n";
+
     if (coord_transformations != nullptr) {
         for (auto& det : detections) {
             det->update_coordinate_transformation(*coord_transformations);
@@ -35,8 +35,49 @@ std::vector<std::shared_ptr<TrackedObject>> Tracker::update(
     }
 
     remove_stale_trackers();
-    update_tracker_with_detections(detections, period);
-    create_new_tracked_objects(detections, period);
+
+    std::cout << "[DEBUG] Removed " << (tracked_objects.size()) << " stale trackers\n";
+
+    std::vector<bool> matched(detections.size(), false);
+
+    for (auto& obj : tracked_objects) {
+        double best_dist = distance_threshold;
+        int best_idx = -1;
+
+        for (size_t i = 0; i < detections.size(); ++i) {
+            if (matched[i]) continue;
+
+            try {
+                double dist = distance_function(*detections[i], *obj);
+                if (dist < best_dist) {
+                    best_dist = dist;
+                    best_idx = static_cast<int>(i);
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "[ERROR] Exception in distance_function: " << e.what() << "\n";
+            }
+        }
+
+        if (best_idx != -1) {
+            obj->hit(*detections[best_idx], period);
+            matched[best_idx] = true;
+            std::cout << "[DEBUG] Matched detection " << best_idx << " to tracked object\n";
+        } else {
+            obj->tracker_step();
+            std::cout << "[DEBUG] Tracker stepped due to no match\n";
+        }
+    }
+
+    std::vector<std::shared_ptr<Detection>> unmatched_detections;
+    for (size_t i = 0; i < detections.size(); ++i) {
+        if (!matched[i]) {
+            unmatched_detections.push_back(detections[i]);
+        }
+    }
+
+    create_new_tracked_objects(unmatched_detections, period, coord_transformations);
+
+    std::cout << "[DEBUG] Total tracked objects after update: " << tracked_objects.size() << "\n";
 
     return get_active_objects();
 }
@@ -48,12 +89,18 @@ void Tracker::remove_stale_trackers() {
         tracked_objects.end());
 }
 
-void Tracker::update_tracker_with_detections(const std::vector<std::shared_ptr<Detection>>& detections, int period) {
-    // Add your logic to update tracked objects with detections here
-}
+void Tracker::create_new_tracked_objects(const std::vector<std::shared_ptr<Detection>>& unmatched_detections, int period, CoordinatesTransformation* coord_transformations) {
+    for (const auto& det : unmatched_detections) {
+        std::cout << "[DEBUG] Creating new tracked object\n";
 
-void Tracker::create_new_tracked_objects(const std::vector<std::shared_ptr<Detection>>& unmatched_detections, int period) {
-    // Add logic to create new tracked objects from unmatched detections
+        auto tracked_object = std::make_shared<TrackedObject>(
+            nullptr, *det, hit_counter_max, initialization_delay, pointwise_hit_counter_max,
+            detection_threshold, period, filter_factory, past_detections_length,
+            reid_hit_counter_max, coord_transformations);
+
+        tracked_object->assign_id();  // Assign unique ID
+        tracked_objects.push_back(tracked_object);
+    }
 }
 
 int Tracker::current_object_count() const {

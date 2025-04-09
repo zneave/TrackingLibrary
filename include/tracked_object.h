@@ -31,10 +31,12 @@ public:
     void update_coordinate_transformation(const CoordinatesTransformation& coordinate_transformation);
 
     const Eigen::MatrixXd& get_estimate(bool absolute = false) const;
+    void set_estimate(const Eigen::MatrixXd& new_estimate);
+    int get_id() const;
+    void assign_id();
 
 private:
     void _conditionally_add_to_past_detections(const Detection& detection);
-    void _acquire_ids();
 
     _TrackedObjectFactory* obj_factory;
     Eigen::MatrixXd estimate;

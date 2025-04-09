@@ -1,9 +1,19 @@
-#include "include/motion_estimator.h"
+#include "motion_estimator.h"
+#include "homography_transformation.h"
+#include <opencv2/core/eigen.hpp>
 
 MotionEstimator::MotionEstimator(int max_points, int min_distance, int block_size,
                                  TransformationGetter* transformations_getter, bool draw_flow, cv::Scalar flow_color, double quality_level)
-    : max_points(max_points), min_distance(min_distance), block_size(block_size), draw_flow(draw_flow), flow_color(flow_color), quality_level(quality_level),
-      transformations_getter(transformations_getter), transformations_getter_copy(transformations_getter->clone()) {}
+    : max_points(max_points), min_distance(min_distance), block_size(block_size), draw_flow(draw_flow), flow_color(flow_color), quality_level(quality_level)
+{
+    if (transformations_getter) {
+        this->transformations_getter = transformations_getter;
+        this->transformations_getter_copy = transformations_getter->clone();
+    } else {
+        this->transformations_getter = new HomographyTransformationGetter();
+        this->transformations_getter_copy = this->transformations_getter->clone();
+    }
+}
 
 std::optional<CoordinatesTransformation*> MotionEstimator::update(const cv::Mat& frame, const cv::Mat& mask) {
     cv::cvtColor(frame, gray_next, cv::COLOR_BGR2GRAY);
@@ -42,19 +52,26 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> MotionEstimator::get_sparse_flow(co
     std::vector<float> err;
     cv::calcOpticalFlowPyrLK(gray_prvs, gray_next, prev_pts_cv, curr_pts_cv, status, err);
 
-    // Filter points based on status
+    // Fix: capture curr_pts_cv
     auto it = std::remove_if(curr_pts_cv.begin(), curr_pts_cv.end(),
-                             [&status, &prev_pts_cv](const cv::Point2f& pt) {
+                             [&status, &curr_pts_cv](const cv::Point2f& pt) {
                                  auto idx = &pt - &curr_pts_cv[0];
                                  return status[idx] == 0;
                              });
     curr_pts_cv.erase(it, curr_pts_cv.end());
 
-    // Convert to Eigen matrices
-    Eigen::MatrixXd curr_pts(curr_pts_cv.size(), 2), prev_pts_eig(prev_pts_cv.size(), 2);
-    cv::cv2eigen(curr_pts_cv, curr_pts);
-    cv::cv2eigen(prev_pts_cv, prev_pts_eig);
+    // Manual conversion to Eigen
+    Eigen::MatrixXd curr_pts(curr_pts_cv.size(), 2);
+    Eigen::MatrixXd prev_pts_eig(prev_pts_cv.size(), 2);
+
+    for (size_t i = 0; i < curr_pts_cv.size(); ++i) {
+        curr_pts(i, 0) = curr_pts_cv[i].x;
+        curr_pts(i, 1) = curr_pts_cv[i].y;
+    }
+    for (size_t i = 0; i < prev_pts_cv.size(); ++i) {
+        prev_pts_eig(i, 0) = prev_pts_cv[i].x;
+        prev_pts_eig(i, 1) = prev_pts_cv[i].y;
+    }
 
     return std::make_tuple(curr_pts, prev_pts_eig);
 }
-

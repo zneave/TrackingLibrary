@@ -1,6 +1,6 @@
 // detection.cpp
 
-#include "include/detection.h"
+#include "detection.h"
 #include "coordinates_transformation.h"
 
 Detection::Detection(const Eigen::MatrixXd& points, 
