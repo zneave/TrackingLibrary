@@ -1,9 +1,12 @@
 #include "NoFilter.h"
 
-NoFilter::NoFilter(int dim_x, int dim_z) : dim_z(dim_z), x(Eigen::VectorXd::Zero(dim_x)) {}
+NoFilter::NoFilter(int dim_x, int dim_z)
+    : dim_z(dim_z) {
+    x = Eigen::VectorXd::Zero(dim_x);
+}
 
 void NoFilter::predict() {
-    // No prediction logic
+    // No prediction logic needed
 }
 
 void NoFilter::update(const Eigen::VectorXd& detection_points_flatten, const Eigen::MatrixXd* R, const Eigen::MatrixXd* H) {
@@ -11,8 +14,13 @@ void NoFilter::update(const Eigen::VectorXd& detection_points_flatten, const Eig
         Eigen::VectorXd diagonal = H->diagonal();
         Eigen::VectorXd one_minus_diagonal = Eigen::VectorXd::Ones(dim_z) - diagonal;
 
-        x.head(dim_z) = diagonal.asDiagonal() * detection_points_flatten + one_minus_diagonal.asDiagonal() * x.head(dim_z);
+        x.head(dim_z) = diagonal.asDiagonal() * detection_points_flatten +
+                        one_minus_diagonal.asDiagonal() * x.head(dim_z);
     } else {
         x.head(dim_z) = detection_points_flatten;
     }
+}
+
+Eigen::VectorXd NoFilter::get_state() const {
+    return x;
 }

@@ -8,6 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # === Find OpenCV ===
 find_package(OpenCV REQUIRED)
 
+# === Find Yaml ===
+find_package(yaml-cpp REQUIRED)
+include_directories(${YAML_CPP_INCLUDE_DIRS})
+
 # === Find Eigen ===
 find_path(EIGEN3_INCLUDE_DIR Eigen/Dense PATH_SUFFIXES eigen3)
 if(NOT EIGEN3_INCLUDE_DIR)
@@ -29,4 +33,4 @@ add_library(tracking STATIC ${TRACKING_SOURCES})
 
 # === Example executable ===
 add_executable(example_tracker examples/tracker_example.cpp)
-target_link_libraries(example_tracker tracking ${OpenCV_LIBS})
+target_link_libraries(example_tracker tracking ${OpenCV_LIBS} yaml-cpp)

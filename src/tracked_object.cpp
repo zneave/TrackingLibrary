@@ -1,8 +1,7 @@
 #include "tracked_object.h"
 #include "coordinates_transformation.h"
 #include "filter.h"
-
-static int global_id_counter = 0;
+#include <iostream>
 
 TrackedObject::TrackedObject(_TrackedObjectFactory* obj_factory,
                              const Detection& initial_detection,
@@ -24,22 +23,36 @@ TrackedObject::TrackedObject(_TrackedObjectFactory* obj_factory,
       past_detections_length(past_detections_length),
       coord_transformations(const_cast<CoordinatesTransformation*>(coord_transformations)),
       is_initializing(true),
-      hit_counter(hit_counter_max),
+      id(-1),
       age(0),
-      id(-1), global_id(-1) {
+      hit_counter(hit_counter_max) {
 
     absolute_points = initial_detection.get_absolute_points();
-    estimate = initial_detection.get_points();
+    estimate = absolute_points;
+
+    if (filter_factory) {
+        filter = filter_factory->create(estimate);
+    }
+
+    if (estimate.rows() > 0 && estimate.cols() >= 2) {
+        trail.emplace_back(estimate(0, 0), estimate(0, 1));
+        if (trail.size() > max_trail_length) {
+            trail.erase(trail.begin());
+        }
+    }
 }
 
 void TrackedObject::tracker_step() {
     if (filter) {
         filter->predict();
+        estimate = filter->get_state().transpose();
     }
-    hit_counter -= 1;
 
-    for (auto& val : point_hit_counter) {
-        val = std::max(0, val - 1);
+    hit_counter -= 1;
+    age += 1;
+
+    if (estimate.rows() > 0 && estimate.cols() >= 2) {
+        trail.emplace_back(cv::Point(static_cast<int>(estimate(0, 0)), static_cast<int>(estimate(0, 1))));
     }
 }
 
@@ -48,8 +61,19 @@ bool TrackedObject::is_active() const {
 }
 
 void TrackedObject::hit(const Detection& detection, int period) {
-    estimate = detection.get_points();
+    estimate = detection.get_absolute_points();
+
+    if (filter) {
+        Eigen::VectorXd z = Eigen::Map<const Eigen::VectorXd>(estimate.data(), estimate.size());
+        filter->update(z);
+    }
+
     hit_counter = hit_counter_max;
+
+    if (estimate.rows() > 0 && estimate.cols() >= 2) {
+        trail.emplace_back(cv::Point(static_cast<int>(estimate(0, 0)), static_cast<int>(estimate(0, 1))));
+    }
+
     _conditionally_add_to_past_detections(detection);
 }
 
@@ -60,10 +84,23 @@ void TrackedObject::update_coordinate_transformation(const CoordinatesTransforma
 }
 
 void TrackedObject::_conditionally_add_to_past_detections(const Detection& detection) {
-    past_detections.push_back(detection);
-    if (past_detections.size() > static_cast<size_t>(past_detections_length)) {
+    if (past_detections.size() >= static_cast<size_t>(past_detections_length)) {
         past_detections.erase(past_detections.begin());
     }
+    past_detections.push_back(detection);
+}
+
+void TrackedObject::_acquire_ids() {
+    static int next_id = 0;
+    id = next_id++;
+}
+
+void TrackedObject::assign_id(int new_id) {
+    id = new_id;
+}
+
+int TrackedObject::get_id() const {
+    return id;
 }
 
 const Eigen::MatrixXd& TrackedObject::get_estimate(bool absolute) const {
@@ -72,17 +109,4 @@ const Eigen::MatrixXd& TrackedObject::get_estimate(bool absolute) const {
         return transformed;
     }
     return estimate;
-}
-
-void TrackedObject::set_estimate(const Eigen::MatrixXd& new_estimate) {
-    estimate = new_estimate;
-}
-
-int TrackedObject::get_id() const {
-    return id;
-}
-
-void TrackedObject::assign_id() {
-    id = global_id_counter++;
-    global_id = id;
 }

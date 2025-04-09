@@ -90,6 +90,8 @@ void Tracker::remove_stale_trackers() {
 }
 
 void Tracker::create_new_tracked_objects(const std::vector<std::shared_ptr<Detection>>& unmatched_detections, int period, CoordinatesTransformation* coord_transformations) {
+    static int global_id_counter = 0;
+
     for (const auto& det : unmatched_detections) {
         std::cout << "[DEBUG] Creating new tracked object\n";
 
@@ -98,7 +100,7 @@ void Tracker::create_new_tracked_objects(const std::vector<std::shared_ptr<Detec
             detection_threshold, period, filter_factory, past_detections_length,
             reid_hit_counter_max, coord_transformations);
 
-        tracked_object->assign_id();  // Assign unique ID
+        tracked_object->assign_id(global_id_counter++);
         tracked_objects.push_back(tracked_object);
     }
 }

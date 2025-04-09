@@ -1,0 +1,4 @@
+visualization:
+  enabled: true
+  window_name: "Tracking Debug"
+  wait_time_ms: 50
