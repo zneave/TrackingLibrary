@@ -8,7 +8,7 @@
 constexpr int WIDTH = 800;
 constexpr int HEIGHT = 600;
 constexpr int NUM_TARGETS = 10;
-constexpr int TRAIL_MAX_LENGTH = 20;
+constexpr int TRAIL_MAX_LENGTH = 10;
 
 struct Target {
     cv::Point2f position;
@@ -75,10 +75,15 @@ int main() {
             int id = obj->get_id();
             auto color = generate_color(id);
 
-            const auto& trail = obj->trail;
+            auto& trail = obj->trail;
+            if (trail.size() > TRAIL_MAX_LENGTH) {
+                trail.erase(trail.begin(), trail.begin() + (trail.size() - TRAIL_MAX_LENGTH));
+            }
+
             for (size_t i = 1; i < trail.size(); ++i) {
                 float alpha = static_cast<float>(i) / trail.size();
-                cv::Scalar faded_color = color * alpha;
+                float faded_alpha = std::pow(alpha, 2.5f);
+                cv::Scalar faded_color = color * faded_alpha;
                 cv::line(frame, trail[i - 1], trail[i], faded_color, 2, cv::LINE_AA);
             }
 
